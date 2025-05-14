@@ -2,6 +2,9 @@ import pygame
 import sys
 import math
 import pygame.gfxdraw
+import random
+
+from particle import Particle
 
 WIDTH, HEIGHT = 800, 600  # Window dimensions
 FPS = 200  # Frames per second
@@ -172,6 +175,7 @@ class Simulation:
         pygame.display.set_caption("TikTok Ball")
         self.clock = pygame.time.Clock()
         self.running = True
+        self.particles = []
 
         self.ball = Ball(pos=SIMULATION_CENTER, radius=BALL_RADIUS)
 
@@ -194,28 +198,48 @@ class Simulation:
             if event.type == pygame.QUIT:
                 self.running = False
 
+    def spawn_particles(self, pos, color=(255, 255, 255), count=30, radius=30):
+        for _ in range(count):
+            angle = random.uniform(0, 2 * math.pi)
+            distance = random.uniform(radius - 5, radius + 5)  # épaisseur du cercle
+            offset = pygame.Vector2(math.cos(angle), math.sin(angle)) * distance
+            particle_pos = pos + offset
+            particle = Particle(particle_pos, color=color)
+            particle.vel = offset.normalize() * random.uniform(10, 30)
+            self.particles.append(particle)
+
     def update(self, dt):
         for obstacle in self.obstacles:
             obstacle.update(dt)
 
         self.ball.update(dt)
 
-        self.obstacles = [o for o in self.obstacles if not o.should_destroy(self.ball)]
+        new_obstacles = []
+        for o in self.obstacles:
+            if o.should_destroy(self.ball):
+                self.spawn_particles(o.pos, color=o.color, radius=o.radius)
+            else:
+                new_obstacles.append(o)
+        self.obstacles = new_obstacles
 
-        print("Updating obstacles")
         for i, obstacle in enumerate(self.obstacles):
             obstacle.target_radius = 200 + i * 20
-            print(obstacle.target_radius, obstacle.radius)
 
         steps = 5
         for _ in range(steps):
             self.ball.check_collisions(self.obstacles)
+
+        for p in self.particles:
+            p.update(dt)
+        self.particles = [p for p in self.particles if p.is_alive()]
 
     def draw(self):
         self.screen.fill((0, 0, 0))
         for obstacle in self.obstacles:
             obstacle.draw(self.screen)
         self.ball.draw(self.screen)
+        for p in self.particles:
+            p.draw(self.screen)
 
         pygame.display.flip()
 
