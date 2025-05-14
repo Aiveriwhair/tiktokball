@@ -3,29 +3,25 @@ import sys
 import math
 import pygame.gfxdraw
 
-# Constants
-WIDTH, HEIGHT = 800, 600
-FPS = 200
-GRAVITY = 800
+WIDTH, HEIGHT = 800, 600  # Window dimensions
+FPS = 200  # Frames per second
+GRAVITY = 800  # Acceleration due to gravity
 BOUNCE_DAMPING = 1  # Reduces speed after a bounce
-MASS = 1  # Simplification: treat mass as 1 for now
-RADIUS = 20  # Radius of the ball
+MASS = 1  # Mass of the ball
 SIMULATION_CENTER = (WIDTH / 2, HEIGHT / 2)  # Center of the simulation area
+BALL_RADIUS = 20  # Radius of the ball
 
 
-# Ball Class (manual physics, without collision calculation)
 class Ball:
-    def __init__(self, pos, radius=RADIUS):
+    def __init__(self, pos, radius):
         self.pos = pygame.Vector2(pos)
         self.radius = radius
-        self.vel = pygame.Vector2(5, 0)  # Initial velocity is 0
-        self.acc = pygame.Vector2(0, GRAVITY)  # Gravity acts on the ball
+        self.vel = pygame.Vector2(5, 0)
+        self.acc = pygame.Vector2(0, GRAVITY)
 
     def update(self, dt):
-        # Apply gravity
         self.vel += self.acc * dt
 
-        # Update position based on velocity
         self.pos += self.vel * dt
 
     def draw(self, surface):
@@ -41,19 +37,14 @@ class Ball:
         to_ball = self.pos - obstacle.pos
         distance = to_ball.length()
         max_distance = obstacle.radius - self.radius
-        # Si la balle dépasse le rayon intérieur
         if distance > max_distance:
-            # Vérifie si la balle est dans une zone ouverte
             if obstacle.is_open_at(self.pos):
                 return
             if distance == 0:
-                # Éviter division par zéro si centres superposés
                 normal = pygame.Vector2(1, 0)
             else:
                 normal = -to_ball.normalize()
-            # Corrige position (remet la balle juste au bord intérieur)
             self.pos = obstacle.pos + to_ball.normalize() * max_distance
-            # Rebondir proprement (élastique ou avec damping)
             self.vel = self.vel.reflect(normal) * BOUNCE_DAMPING
 
 
@@ -62,7 +53,7 @@ class CircularObstacle:
         self,
         pos,
         radius,
-        open_angle_range=None,  # (min_angle, max_angle) in degrees
+        open_angle_range=None,
         color=(150, 150, 150),
         elasticity=0.8,
         friction=0.7,
@@ -74,7 +65,7 @@ class CircularObstacle:
         self.color = color
         self.elasticity = elasticity
         self.friction = friction
-        self.open_angle_range = open_angle_range  # in degrees
+        self.open_angle_range = open_angle_range
         self.rotationSpeed = rotationSpeed
         self.shrink_speed = 500
 
@@ -86,24 +77,21 @@ class CircularObstacle:
         min_angle, max_angle = self.open_angle_range
 
         if min_angle <= max_angle:
-            # Cas normal
             return min_angle <= angle <= max_angle
         else:
-            # La plage dépasse 360° et "wrap"
             return angle >= min_angle or angle <= max_angle
 
     def update(self, dt):
-        # Smooth transition to the target radius
+
         if abs(self.radius - self.target_radius) > 1:
             direction = 1 if self.target_radius > self.radius else -1
             self.radius += direction * self.shrink_speed * dt
-            # Clamp pour éviter de dépasser
+
             if (direction == 1 and self.radius > self.target_radius) or (
                 direction == -1 and self.radius < self.target_radius
             ):
                 self.radius = self.target_radius
 
-        # Update the open angle range based on rotation speed
         if self.open_angle_range is not None:
             min_angle, max_angle = self.open_angle_range
             min_angle += self.rotationSpeed * dt
@@ -124,7 +112,6 @@ class CircularObstacle:
             self.dessine_arc(surface, min_angle, max_angle)
 
     def draw_open_circle(self, surface, min_angle, max_angle, step=1, width=4):
-        # Normaliser les angles
         min_angle %= 360
         max_angle %= 360
 
@@ -137,7 +124,6 @@ class CircularObstacle:
                 if not (angle >= min_angle or angle <= max_angle):
                     angles.append(angle)
 
-        # Convertir en radians et tracer des segments
         points = []
         for angle in angles:
             rad = math.radians(angle)
@@ -179,19 +165,16 @@ class CircularObstacle:
         return is_escaping and self.is_open_at(ball.pos)
 
 
-# Simulation Class
 class Simulation:
     def __init__(self, gravity=GRAVITY, bounce_damping=BOUNCE_DAMPING):
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
-        pygame.display.set_caption("Manual Physics Ball Inside Multiple Circular Walls")
+        pygame.display.set_caption("TikTok Ball")
         self.clock = pygame.time.Clock()
         self.running = True
 
-        # Ball inside the circle
-        self.ball = Ball(pos=SIMULATION_CENTER)  # Start inside the first circle
+        self.ball = Ball(pos=SIMULATION_CENTER, radius=BALL_RADIUS)
 
-        # List to hold multiple circular obstacles
         self.obstacles = []
         for i in range(100):
             self.obstacles.append(
@@ -219,7 +202,6 @@ class Simulation:
 
         self.obstacles = [o for o in self.obstacles if not o.should_destroy(self.ball)]
 
-        # Update the obstacles radius to make them smaller
         print("Updating obstacles")
         for i, obstacle in enumerate(self.obstacles):
             obstacle.target_radius = 200 + i * 20
@@ -230,7 +212,7 @@ class Simulation:
             self.ball.check_collisions(self.obstacles)
 
     def draw(self):
-        self.screen.fill((0, 0, 0))  # Fill screen with white background
+        self.screen.fill((0, 0, 0))
         for obstacle in self.obstacles:
             obstacle.draw(self.screen)
         self.ball.draw(self.screen)
@@ -249,7 +231,6 @@ class Simulation:
         sys.exit()
 
 
-# Example usage:
 if __name__ == "__main__":
     sim = Simulation()
     sim.run()
