@@ -21,15 +21,33 @@ class Ball:
         self.radius = radius
         self.vel = pygame.Vector2(5, 0)
         self.acc = pygame.Vector2(0, GRAVITY)
+        self.trail = []
+        self.max_trail_length = 20
 
     def update(self, dt):
         self.vel += self.acc * dt
-
         self.pos += self.vel * dt
 
+        self.trail.append(self.pos.copy())
+        if len(self.trail) > self.max_trail_length:
+            self.trail.pop(0)
+
     def draw(self, surface):
+        for i, pos in enumerate(self.trail):
+            alpha = int(255 * (i / len(self.trail)))  # Opacité
+            radius = self.radius  # Toujours la même taille que la balle
+            trail_surface = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+            pygame.draw.circle(
+                trail_surface, (255, 0, 0, alpha), (radius, radius), radius
+            )
+            surface.blit(trail_surface, (pos.x - radius, pos.y - radius))
+
+        # Dessine la balle noire (toujours au-dessus)
         pygame.draw.circle(
-            surface, (255, 0, 0), (int(self.pos.x), int(self.pos.y)), self.radius, 40
+            surface, (0, 0, 0), (int(self.pos.x), int(self.pos.y)), self.radius
+        )
+        pygame.draw.circle(  # Contour rouge
+            surface, (255, 0, 0), (int(self.pos.x), int(self.pos.y)), self.radius, 2
         )
 
     def check_collisions(self, obstacles):
@@ -235,7 +253,7 @@ class Simulation:
 
     def draw(self):
         self.screen.fill((0, 0, 0))
-        for obstacle in self.obstacles:
+        for obstacle in self.obstacles[:5]:
             obstacle.draw(self.screen)
         self.ball.draw(self.screen)
         for p in self.particles:

@@ -9,10 +9,10 @@ class Particle:
         angle = math.radians(random.uniform(0, 360))
         speed = random.uniform(10, 30)
         self.vel = pygame.Vector2(math.cos(angle), math.sin(angle)) * speed
-        self.radius = random.randint(2, 4)
+        self.radius = 1
         self.color = color
         self.faded_color = tuple(int(c * 0.7) for c in self.color)
-        self.lifetime = 0.2
+        self.lifetime = 0.1
         self.age = 0
         self.width = random.randint(1, 2)
 
