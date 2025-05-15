@@ -34,19 +34,18 @@ class Ball:
 
     def draw(self, surface):
         for i, pos in enumerate(self.trail):
-            alpha = int(255 * (i / len(self.trail)))  # Opacité
-            radius = self.radius  # Toujours la même taille que la balle
+            alpha = int(255 * (i / len(self.trail)))
+            radius = self.radius
             trail_surface = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
             pygame.draw.circle(
                 trail_surface, (255, 0, 0, alpha), (radius, radius), radius
             )
             surface.blit(trail_surface, (pos.x - radius, pos.y - radius))
 
-        # Dessine la balle noire (toujours au-dessus)
         pygame.draw.circle(
             surface, (0, 0, 0), (int(self.pos.x), int(self.pos.y)), self.radius
         )
-        pygame.draw.circle(  # Contour rouge
+        pygame.draw.circle(
             surface, (255, 0, 0), (int(self.pos.x), int(self.pos.y)), self.radius, 2
         )
 
@@ -219,7 +218,7 @@ class Simulation:
     def spawn_particles(self, pos, color=(255, 255, 255), count=30, radius=30):
         for _ in range(count):
             angle = random.uniform(0, 2 * math.pi)
-            distance = random.uniform(radius - 5, radius + 5)  # épaisseur du cercle
+            distance = random.uniform(radius - 5, radius + 5)
             offset = pygame.Vector2(math.cos(angle), math.sin(angle)) * distance
             particle_pos = pos + offset
             particle = Particle(particle_pos, color=color)
